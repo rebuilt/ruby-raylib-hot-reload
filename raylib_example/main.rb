@@ -13,6 +13,7 @@
 
 require "raylib"
 require "listen"
+require "debug"
 
 require_relative "lib/game_logic"
 require_relative "lib/irb"
@@ -55,7 +56,12 @@ if __FILE__ == $PROGRAM_NAME
 
   until WindowShouldClose()
 
-    IRB.start_session(binding) if IsKeyDown(KEY_GRAVE) && defined?(IRB)
+    # IRB.start_session(binding) if IsKeyDown(KEY_GRAVE) && defined?(IRB)
+    if IsKeyPressed(KEY_GRAVE)
+      Thread.new do
+        binding.break # drops into debugger without killing the game thread
+      end.join
+    end
 
     GameLogic.update(state)
     GameLogic.draw(state)
