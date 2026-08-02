@@ -51,17 +51,19 @@ state = Hashlike.new
 
 if __FILE__ == $PROGRAM_NAME
 
+  state.screen_width = 1280
+  state.screen_height = 720
+
+  SetConfigFlags(FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT)
+  InitWindow(state.screen_width, state.screen_height, "raylib [text] example - 3d drawing")
   GameLogic.init(state)
   EnableCursor()
 
   until WindowShouldClose()
 
-    # IRB.start_session(binding) if IsKeyDown(KEY_GRAVE) && defined?(IRB)
-    if IsKeyPressed(KEY_GRAVE)
-      Thread.new do
-        binding.break # drops into debugger without killing the game thread
-      end.join
-    end
+    GameLogic.init(state) if IsKeyDown(KEY_F5)
+
+    binding.break if IsKeyPressed(KEY_GRAVE)
 
     GameLogic.update(state)
     GameLogic.draw(state)

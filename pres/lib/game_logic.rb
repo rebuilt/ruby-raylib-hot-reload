@@ -12,13 +12,8 @@ require_relative "threed"
 
 module GameLogic
   def self.init(state)
-    state.screen_width = 1280
-    state.screen_height = 720
 
-    SetConfigFlags(FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT)
-    InitWindow(state.screen_width, state.screen_height, "raylib [text] example - 3d drawing")
-
-    state.spin = true        # Spin the camera?
+    state.spin = false        # Spin the camera?
     state.multicolor = false # Multicolor mode
 
     # Define the camera to look into our 3d world
@@ -63,18 +58,14 @@ module GameLogic
     state.show_letter_boundry = false
     state.show_text_boundry = false
 
-    DisableCursor() # Limit cursor to relative movement inside the window
+    # DisableCursor() # Limit cursor to relative movement inside the window
 
     SetTargetFPS(60) # Set our game to run at 60 frames-per-second
   end
 
   def self.update(state)
-    if IsKeyDown(KEY_R)
-      state = Hashlike.new
-      init(state)
-    end
 
-    # UpdateCamera(state.camera.pointer, state.camera_mode)
+    UpdateCamera(state.camera.pointer, state.camera_mode)
 
     # Handle font files dropped
     if IsFileDropped()
