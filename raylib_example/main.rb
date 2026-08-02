@@ -16,7 +16,6 @@ require "listen"
 require "debug"
 
 require_relative "lib/game_logic"
-require_relative "lib/irb"
 require_relative "lib/hash"
 
 shared_lib_path = Gem::Specification.find_by_name("raylib-bindings").full_gem_path + "/lib/"
