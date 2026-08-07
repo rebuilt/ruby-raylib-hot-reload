@@ -54,8 +54,7 @@ if __FILE__ == $PROGRAM_NAME
   state.screen_width = 1280
   state.screen_height = 720
 
-  SetConfigFlags(FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT)
-  InitWindow(state.screen_width, state.screen_height, "raylib [text] example - 3d drawing")
+  InitWindow(state.screen_width, state.screen_height, "raylib [text] example - 2d camera")
   GameLogic.init(state)
   EnableCursor()
 
