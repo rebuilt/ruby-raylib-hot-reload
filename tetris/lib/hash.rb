@@ -7,7 +7,7 @@ class Hashlike < Hash
 
   def method_missing(name, *args)
     # Strip the trailing '=' for setters
-    if name.to_s.end_with?("=") && args.length == 1
+    if name.to_s.end_with?('=') && args.length == 1
       self[name.to_s.chop.to_sym] = args.first
       return
     end
@@ -18,20 +18,16 @@ class Hashlike < Hash
         # args.game = { player: { x: 10 } }
         self[key] = self.class.new(args.first)
         return
-      elsif args.empty? && !name.nil?
-        # args.game.player.x
-        self[key] = self.class.new
-        self.define_singleton_method(name) { self[key] }
-        return self[key]
       end
-      raise NoMethodError, "undefined method '#{name}' for #{inspect}"
+      raise NoMethodError, "undefined method '#{name}' for #{self.inspect}"
     end
 
     value = self[key]
     value.is_a?(Hash) ? value : value
   end
 
-  def respond_to_missing?(_name, _include_private = false)
-    true # always respond — we handle everything via method_missing
+  def respond_to_missing?(name, include_private = false)
+    true  # always respond — we handle everything via method_missing
   end
 end
+

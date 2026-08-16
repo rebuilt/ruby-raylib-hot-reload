@@ -14,7 +14,6 @@
 require "raylib"
 require "listen"
 require "debug"
-require "ostruct"
 
 require_relative "lib/game_logic"
 require_relative "lib/hash"
@@ -48,13 +47,14 @@ listener = Listen.to("lib") do |modified, added, removed|
 end
 
 listener.start
+state = Hashlike.new
 
 if __FILE__ == $PROGRAM_NAME
 
-  state = Hashlike.new
-  state.screen_width = 1280
-  state.screen_height = 720
-  InitWindow(state[:screen_width], state[:screen_height], "raylib [text] example - 2d camera")
+  state.screen_width = 800
+  state.screen_height = 450
+
+  InitWindow(state.screen_width, state.screen_height, "classic game: tetris")
   GameLogic.init(state)
   EnableCursor()
 

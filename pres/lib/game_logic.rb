@@ -1,107 +1,107 @@
-# raylib [text] example - 3d drawing
-#
-# Translated from threed.c (examples/text/text_draw_3d.c) by Vlad Adrian
-# (@demizdor), reviewed by Ramon Santamaria (@raysan5).
-#
-# Draws a 2D text in 3D space using the default font, with an optional wavy
-# effect on the parts wrapped in `~~...~~`. The text can be typed live, its
-# size/spacing/layers adjusted with the keyboard and the font swapped by
-# dragging a font file onto the window.
-
-require_relative "threed"
-
 module GameLogic
   def self.init(state)
-    MAX_BUILDINGS = 100
+    Raylib.SetTargetFPS(60)
 
+    state.player.position = Vector2.create(640, 360)
+    state.player.velocity = Vector2.create(0, 0)
+    state.player.size = Vector2.create(32, 32)
+    state.player.sprite = Raylib.LoadTexture("resources/balloon_green1.png")
 
-    state.player = Rectangle.create(400, 280, 40, 40)
-    state.buildings = Array.new(MAX_state.buildings) { Rectangle.create(0, 0, 0, 0) }
-    state.buildColors = Array.new(MAX_state.buildings)
-
-    spacing = 0
-
-    MAX_state.buildings.times do |i|
-      state.buildings[i].width = GetRandomValue(50, 200).to_f
-      state.buildings[i].height = GetRandomValue(100, 800).to_f
-      state.buildings[i].y = screenHeight - 130.0 - state.buildings[i].height
-      state.buildings[i].x = -6000.0 + spacing
-
-      spacing += state.buildings[i].width.to_i
-
-      state.buildColors[i] = Color.from_u8(GetRandomValue(200, 240), GetRandomValue(200, 240), GetRandomValue(200, 250), 255)
+    state.horizontal_movement.left = -1
+    state.horizontal_movement.right = 1
+    state.horizontal_movement.none = 0
+    state.player.grounded = true
+    state.boxes = []
+    100.times do
+      state.boxes << {
+        position: Vector2.create(rand(0..state[:screen_width]),
+          rand(0..state[:screen_height])),
+        size: Vector2.create(rand(1..10), rand(1..10)),
+        color: Color.from_u8(rand(0..255), rand(0..255), rand(0..255), 255),
+        dx: rand(-100..100),
+        dy: rand(-100..100)
+      }
     end
-
-    camera = Camera2D.new
-               .with_target(state.player.x + 20.0, state.player.y + 20.0)
-               .with_offset(screenWidth / 2.0, screenHeight / 2.0)
-               .with_rotation(0.0)
-               .with_zoom(1.0)
-
-    SetTargetFPS(60)
+    state.orange = Color.from_u8(226, 199, 121, 255)
   end
 
   def self.update(state)
-    # Player movement
-    if IsKeyDown(KEY_RIGHT)
-      state.player.x += 2
-    elsif IsKeyDown(KEY_LEFT)
-      state.player.x -= 2
+    moving = if Raylib.IsKeyDown(KEY_A) || Raylib.IsKeyDown(KEY_LEFT) || Raylib.IsGamepadButtonDown(0, 4)
+      state.horizontal_movement.left
+    elsif Raylib.IsKeyDown(KEY_D) || Raylib.IsKeyDown(KEY_RIGHT) || Raylib.IsGamepadButtonDown(0, 2)
+      state.horizontal_movement.right
+    else
+      state.horizontal_movement.none
     end
 
-    # Camera target follows player
-    camera.target.set(state.player.x + 20, state.player.y + 20)
-
-    # Camera rotation controls
-    if IsKeyDown(KEY_A)
-      camera.rotation -= 1
-    elsif IsKeyDown(KEY_S)
-      camera.rotation += 1
+    state[:player][:velocity].x = if Raylib.IsGamepadButtonDown(0, GAMEPAD_BUTTON_RIGHT_FACE_LEFT)
+      moving * 400
+    else
+      moving * 200
     end
 
-    # Limit camera rotation to 80 degrees (-40 to 40)
-    camera.rotation = camera.rotation.clamp(-40, 40)
+    state[:player][:velocity].y += 2000 * Raylib.GetFrameTime
 
-    # Camera zoom controls
-    camera.zoom += GetMouseWheelMove() * 0.05
-    camera.zoom = camera.zoom.clamp(0.1, 3.0)
+    if state.player.grounded && (Raylib.IsKeyPressed(KEY_SPACE) ||
+        Raylib.IsKeyPressed(KEY_W) ||
+        Raylib.IsGamepadButtonPressed(0, 0) ||
+        Raylib.IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN))
+      state[:player][:velocity].y = -600
+      state.player.grounded = false
+    end
 
-    # Camera reset (zoom and rotation)
-    camera.zoom, camera.rotation = 1.0, 0.0 if IsKeyPressed(KEY_R)
+    # state.dig(:player, :position).x += state[:player][:velocity].x * Raylib.GetFrameTime
+    state.player.position.x += state[:player][:velocity].x * Raylib.GetFrameTime
+    state[:player][:position].y += state[:player][:velocity].y * Raylib.GetFrameTime
+    if state[:player][:position].y > state[:screen_height] - state[:player][:size].y
+      state[:player][:position].y = state[:screen_height] - state[:player][:size].y
+      state.player.grounded = true
+    end
+    if state[:player][:position].x < 0
+      state[:player][:position].x = Raylib.GetScreenWidth() - state[:player][:size].x
+    elsif state[:player][:position].x > Raylib.GetScreenWidth() - state[:player][:size].x
+      state[:player][:position].x = 0
+    end
+
+    state.boxes.each do |box|
+      box[:position].x += box[:dx] * Raylib.GetFrameTime
+      box[:position].y += box[:dy] * Raylib.GetFrameTime
+
+      box[:dx] *= -1 if box[:position].x < 0 || box[:position].x > state[:screen_width] - box[:size].x
+      box[:dy] *= -1 if box[:position].y < 0 || box[:position].y > state[:screen_height] - box[:size].y
+    end
   end
 
   def self.draw(state)
+    Raylib.BeginDrawing
+    Raylib.ClearBackground(Color.from_u8(100, 149, 237))
 
-    BeginDrawing()
-      ClearBackground(RAYWHITE)
+    # state.boxes.each do |box|
+    #   Raylib.DrawRectangleV(box[:position], box[:size], box[:color])
+    # end
 
-      BeginMode2D(camera)
-        DrawRectangle(-6000, 320, 13000, 8000, DARKGRAY)
+    state.boxes.each do |box|
+      x = box[:position].x
+      y = box[:position].y
+      size_x = box[:size].x
 
-        MAX_state.buildings.times { |i| DrawRectangleRec(state.buildings[i], state.buildColors[i]) }
+      Raylib.DrawCircleV(box[:position], box[:size].x, box[:color])
+      # Raylib.DrawTriangle(box[:position], Vector2.create(box[:position].x - box[:size].x, box[:position].y),
+      # Vector2.create(box[:position].x / 2, box[:position].y + box[:size].y), box[:color])
+      point1 = Vector2.create(x + size_x, y + size_x / 2)
+      point2 = Vector2.create(x - size_x, point1.y)
+      point3 = Vector2.create(point2.x + (point1.x - point2.x) / 2, point1.y + size_x * 2.5)
+      Raylib.DrawTriangle(point1, point2, point3, state.orange)
+    end
 
-        DrawRectangleRec(state.player, RED)
+    # Raylib.DrawTriangle(Vector2.create(400, 300), Vector2.create(350, 300), Vector2.create(375, 350), RED)
 
-        DrawLine(camera.target.x.to_i, -screenHeight*10, camera.target.x.to_i, screenHeight*10, GREEN)
-        DrawLine(-screenWidth*10, camera.target.y.to_i, screenWidth*10, camera.target.y.to_i, GREEN)
-      EndMode2D()
+    Raylib.DrawTexture(state.player.sprite, state.player.position.x, state.player.position.y, WHITE)
+    # HUD
+    Raylib.DrawText("A/D or ←/→ move, SPACE/W jump", 10, 10, 20, DARKGRAY)
+    Raylib.DrawText("F5 reset", 10, 35, 20, DARKGRAY)
+    Raylib.DrawFPS(10, 90)
 
-      DrawText("SCREEN AREA", 640, 10, 20, RED)
-
-      DrawRectangle(0, 0, screenWidth, 5, RED)
-      DrawRectangle(0, 5, 5, screenHeight - 10, RED)
-      DrawRectangle(screenWidth - 5, 5, 5, screenHeight - 10, RED)
-      DrawRectangle(0, screenHeight - 5, screenWidth, 5, RED)
-
-      DrawRectangle(10, 10, 250, 113, Fade(SKYBLUE, 0.5))
-      DrawRectangleLines(10, 10, 250, 113, BLUE)
-
-      DrawText("Free 2d camera controls:", 20, 20, 10, BLACK)
-      DrawText("- Right/Left to move Offset", 40, 40, 10, DARKGRAY)
-      DrawText("- Mouse Wheel to Zoom in-out", 40, 60, 10, DARKGRAY)
-      DrawText("- A / S to Rotate", 40, 80, 10, DARKGRAY)
-      DrawText("- R to reset Zoom and Rotation", 40, 100, 10, DARKGRAY)
-
-    EndDrawing()
+    Raylib.EndDrawing
   end
 end
